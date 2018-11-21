@@ -1,20 +1,18 @@
 from __future__ import print_function
 import spectral
 import numpy as np
-import cv2
-from skimage.filters import threshold_otsu, threshold_minimum
 from spectral import envi
 import os
 from edit_header_info import *
-import copy
 
-def vegetation_mask(filename):
-    fpath = "D:/indoor_plant_measurements_20180831/" + filename + "/reflectance/" + filename + "reflectance-crop.hdr"
-    fpath2 = "D:/indoor_plant_measurements_20180831/" + filename + "/reflectance/"
+
+def vegetation_mask(root_dir, filename):
+    dirname = root_dir + filename + "/reflectance/"
+    fpath = dirname + filename + "reflectance-crop.hdr"
+
 
     img_obj = spectral.open_image(fpath)
     img = img_obj.open_memmap(writable=True)
-    img = copy.copy(img)
 
     img_band_obj = img_obj.bands
     img_bandcenters_array = np.array(img_band_obj.centers)
@@ -38,13 +36,13 @@ def vegetation_mask(filename):
     #vegetation = binary_global * img
 
     #save image in new folder called veg-extract
-    os.makedirs(fpath2 + "/veg-extract")
-    envi.save_image(fpath2 + "veg-extract/" + filename + "NDVI05.hdr", img, force=True, dtype=np.float32)
-    get_header_file_radiance_conv(fpath, fpath2 + "veg-extract/" + filename + "NDVI05.hdr")
+    os.makedirs(dirname + "/veg-extract")
+    envi.save_image(dirname + "veg-extract/" + filename + "NDVI05.hdr", img, force=True, dtype=np.float32)
+    get_header_file_radiance_conv(fpath, dirname + "veg-extract/" + filename + "NDVI05.hdr")
 
     #cv2.imshow("binary_threshold", binary_global)
     #cv2.waitKey(0)
-    return binary_global
+    #return binary_global
 
 
 

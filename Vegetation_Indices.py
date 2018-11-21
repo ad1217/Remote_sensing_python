@@ -5,10 +5,10 @@ import numpy as np
 from collections import OrderedDict
 
 
-def vegetation_indices(filename):
+def vegetation_indices(root_dir, filename):
 
     def get_index(wavelength):
-        [np.argmin(np.absolute(img_bandcenters_array - wavelength))
+        return np.argmin(np.absolute(img_bandcenters_array - wavelength))
 
     def band_search(wavelength):
         return img_obj.read_band(get_index(wavelength))
@@ -18,7 +18,7 @@ def vegetation_indices(filename):
         band_values = img_obj.read_bands(band_idxs)
         return np.average(band_values, axis=2)
 
-    dirname = "D:/indoor_plant_measurements_20180831/" + filename + "/reflectance/veg-extract/"
+    dirname = root_dir + filename + "/reflectance/veg-extract/"
     fpath = dirname + filename + "NDVI05.hdr"
     img_obj = spectral.open_image(fpath)
 
@@ -64,4 +64,9 @@ def vegetation_indices(filename):
     veg_indices = np.stack(VIs.values(), axis=2)
     envi.save_image(dirname + filename + "vegetation_indices.hdr", veg_indices, force=True, dtype=np.float32,
                     metadata={'band names': VIs.keys()})
+
+    #average value for each VI
+    avg_vi = {k: np.average(v) for k, v in VIs}
+    avg_vi["Filename"] = filename
+    return avg_vi
 
