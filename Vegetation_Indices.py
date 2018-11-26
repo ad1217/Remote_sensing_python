@@ -65,8 +65,9 @@ def vegetation_indices(root_dir, filename):
     envi.save_image(dirname + filename + "vegetation_indices.hdr", veg_indices, force=True, dtype=np.float32,
                     metadata={'band names': VIs.keys()})
 
-    #average value for each VI
-    avg_vi = {k: np.average(v) for k, v in VIs}
+    #average value for each VI (not working...)
+    avg_vi = {k: np.nanmean(v) for k, v in VIs.iteritems()}
     avg_vi["Filename"] = filename
+    print(avg_vi)
     return avg_vi
 

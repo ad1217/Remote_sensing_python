@@ -9,15 +9,15 @@ from edit_header_info import *
 
 
 #import calibration file (spectralon #3)
-cal_file = np.loadtxt("D:/spectralon_num3_resample.txt", skiprows= 1)
+cal_file = np.loadtxt("D:/spectralon_num3_resample.txt", skiprows=1)
 
 #import avg. spectralon #3
-whiteref_file = np.loadtxt("D:/white-ref/avg-only_white_plaque3.txt", skiprows= 1)
+whiteref_file = np.loadtxt("D:/white-ref/avg-only_white_plaque3.txt", skiprows=1)
 
 #set working directory
 os.chdir("D:/indoor_plant_measurements_20180831/")
 #set image folder
-path = "high_nutrient_4_2018_08_31_15_04_01"
+path = "waterlogged_4_2018_08_31_14_57_47"
 path2 = "D:/indoor_plant_measurements_20180831/" + path
 
 

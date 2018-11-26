@@ -36,7 +36,8 @@ def vegetation_mask(root_dir, filename):
     #vegetation = binary_global * img
 
     #save image in new folder called veg-extract
-    os.makedirs(dirname + "/veg-extract")
+    if not os.path.isdir(dirname + "veg-extract"):
+        os.makedirs(dirname + "veg-extract")
     envi.save_image(dirname + "veg-extract/" + filename + "NDVI05.hdr", img, force=True, dtype=np.float32)
     get_header_file_radiance_conv(fpath, dirname + "veg-extract/" + filename + "NDVI05.hdr")
 
