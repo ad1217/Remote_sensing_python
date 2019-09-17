@@ -11,11 +11,12 @@ import numpy as np
 import spectral
 from spectral import envi
 
-ROOT_DIR = "/Volumes/New Volume/indoor_plant_measurements_20180831"
+INPUT_DIR = "/Volumes/New Volume/indoor_plant_measurements_20180831"
+OUTPUT_DIR = "/Volumes/New Volume/vis_indoor_plant_measurements_20180831"
 
 def vegetation_mask(root_dir, filename):
-    dirname = root_dir + filename + "/reflectance/"
-    fpath = dirname + filename + "reflectance-crop.hdr"
+    dirname = os.path.join(root_dir, filename, "reflectance/")
+    fpath = os.path.join(dirname, filename + "reflectance-crop.hdr")
 
 
     img_obj = spectral.open_image(fpath)
@@ -37,52 +38,20 @@ def vegetation_mask(root_dir, filename):
     #save image in new folder called veg-extract
     if not os.path.isdir(dirname + "veg-extract"):
         os.makedirs(dirname + "veg-extract")
-    envi.save_image(os.path.join(dirname, "veg-extract/", filename + "NDVI05.hdr"), img, force=True, dtype=np.float32)
-    get_header_file_radiance_conv(fpath, os.path.join(dirname, "veg-extract", filename + "NDVI05.hdr"))
+    envi.save_image(
+        os.path.join(dirname, "veg-extract/", filename + "NDVI05.hdr"),
+        img, force=True, dtype=np.float32)
+    get_header_file_radiance_conv(
+        fpath, os.path.join(dirname, "veg-extract", filename + "NDVI05.hdr"))
 
+def get_header_file_radiance_conv(header_file, output_header_file):
 
-def get_header_file_reflectance(Header_File,Output_Header_File):
-
-    f = open(Header_File, 'r')
+    f = open(header_file, 'r')
     linelist = f.readlines()
     f.close
 
     # Re-open file here
-    f2 = open(Output_Header_File, 'w')
-    for line in linelist:
-        line = line.replace('HEADWALL Hyperspec III],RADIANCE', '[HEADWALL Hyperspec III],Conversion to Reflectance Cube')
-        line = line.replace('bsq','bip')
-        line = line.replace('{49,86,191}','{38,93,149}')
-        f2.write(line)
-    f2.close()
-
-    return
-
-def get_header_file_radiance(Header_File,Output_Header_File):
-
-    f = open(Header_File, 'r')
-    linelist = f.readlines()
-    f.close
-
-    # Re-open file here
-    f2 = open(Output_Header_File, 'w')
-    for line in linelist:
-        line = line.replace('HEADWALL Hyperspec III],RADIANCE', '[HEADWALL Hyperspec III],Radiance - Correct Orientation')
-        line = line.replace('bsq','bip')
-        line = line.replace('{49,86,191}', '{38,93,149}')
-        f2.write(line)
-    f2.close()
-
-    return
-
-def get_header_file_radiance_conv(Header_File,Output_Header_File):
-
-    f = open(Header_File, 'r')
-    linelist = f.readlines()
-    f.close
-
-    # Re-open file here
-    f2 = open(Output_Header_File, 'w')
+    f2 = open(output_header_file, 'w')
     for line in linelist:
         line = line.replace('[HEADWALL Hyperspec III]', '[HEADWALL Hyperspec III],Radiance - Own Calibration')
         line = line.replace('data type = 12', 'data type = 4')
@@ -98,7 +67,8 @@ def vegetation_indices(root_dir, filename):
     def get_index(wavelength):
         return np.argmin(np.absolute(img_bandcenters_array - wavelength))
 
-    def band_search(wavelength):
+    # Band Search
+    def bs(wavelength):
         return img_obj.read_band(get_index(wavelength))
 
     def broad(wavelength_min, wavelength_max):
@@ -116,27 +86,22 @@ def vegetation_indices(root_dir, filename):
 
     VIs = OrderedDict()
 
-    VIs["REP"] = 700 + 40 * (((band_search(670) + band_search(780)) / 2) - band_search(700)) / \
-          (band_search(740) - band_search(700))
-    VIs["NDVI"] = ((band_search(800) - band_search(680))/(band_search(800) + band_search(680)))
-    VIs["WI"] = band_search(900)/ band_search(970)
-    VIs["OSAVI"] = (band_search(800) - band_search(670)) / (band_search(800) + band_search(670) + 0.16)+ 1.16
-    VIs["OSAVI2"] = 1.16 + (band_search(750) - band_search(705))/(band_search(750) + band_search(705) + 0.16)
-    VIs["MCARI"] = (band_search(700) - band_search(670)) - 0.2 * (
-                band_search(700) - band_search(550)) * (
-                        band_search(700) / band_search(670))
-    VIs["RES"] = (band_search(718) - band_search(675)) / (
-                band_search(755) + band_search(675))
-    VIs["NDNI"] = (np.log10(1 / band_search(1510)) - np.log10(1 / band_search(1680))) / (
-                np.log10(1 / band_search(1510)) + np.log10(1 / band_search(1680)))
-    VIs["PRI"] = (band_search(531) - band_search(570)) / (band_search(531) + band_search(570))
+    VIs["REP"] = 700 + 40 * (((bs(670) + bs(780)) / 2) - bs(700)) / (bs(740) - bs(700))
+    VIs["NDVI"] = ((bs(800) - bs(680))/(bs(800) + bs(680)))
+    VIs["WI"] = bs(900)/ bs(970)
+    VIs["OSAVI"] = (bs(800) - bs(670)) / (bs(800) + bs(670) + 0.16)+ 1.16
+    VIs["OSAVI2"] = 1.16 + (bs(750) - bs(705))/(bs(750) + bs(705) + 0.16)
+    VIs["MCARI"] = (bs(700) - bs(670)) - 0.2 * (bs(700) - bs(550)) * (bs(700) / bs(670))
+    VIs["RES"] = (bs(718) - bs(675)) / (bs(755) + bs(675))
+    VIs["NDNI"] = (np.log10(1 / bs(1510)) - np.log10(1 / bs(1680))) / (np.log10(1 / bs(1510)) + np.log10(1 / bs(1680)))
+    VIs["PRI"] = (bs(531) - bs(570)) / (bs(531) + bs(570))
 
     # indices using 680 as red, 800 as NIR, 530 as GREEN
-    VIs["RVI"] = band_search(800)/ band_search(680)
-    VIs["GRVI"] = (band_search(530)- band_search(680)) / (band_search(530) + band_search(680))
-    VIs["MSAVI"] = 2 * band_search(800) + 1 - np.sqrt((2 * band_search(800)+1) ** 2 - 8 *
-                                                      (band_search(800) - band_search(680))) / 2
-    VIs["WDR_NDVI"] = (0.2*band_search(800) - band_search(680)) / (0.2 * band_search(800) + band_search(680))
+    VIs["RVI"] = bs(800)/ bs(680)
+    VIs["GRVI"] = (bs(530)- bs(680)) / (bs(530) + bs(680))
+    VIs["MSAVI"] = 2 * bs(800) + 1 - np.sqrt((2 * bs(800)+1) ** 2 - 8 *
+                                                      (bs(800) - bs(680))) / 2
+    VIs["WDR_NDVI"] = (0.2*bs(800) - bs(680)) / (0.2 * bs(800) + bs(680))
 
 
     NIR_broad = broad(841, 876)
@@ -150,8 +115,10 @@ def vegetation_indices(root_dir, filename):
     VIs["WDR_NDVI_broad"] = (0.2*NIR_broad - RED_broad) / (0.2 * NIR_broad + RED_broad)
 
     veg_indices = np.stack(list(VIs.values()), axis=2)
-    envi.save_image(os.path.join('/Volumes/New Volume/vis_indoor_plant_measurements_20180831', filename + "vegetation_indices.hdr"), veg_indices, force=True, dtype=np.float32,
-                    metadata={'band names': list(VIs.keys())})
+    envi.save_image(
+        os.path.join(OUTPUT_DIR, filename + "vegetation_indices.hdr"),
+        veg_indices, force=True, dtype=np.float32,
+        metadata={'band names': list(VIs.keys())})
 
     #average value for each VI (not working...)
     avg_vi = {k: np.nanmean(v) for k, v in VIs.items()}
@@ -160,13 +127,13 @@ def vegetation_indices(root_dir, filename):
     return avg_vi
 
 
-filenames = os.listdir(ROOT_DIR)
+filenames = os.listdir(INPUT_DIR)
 
 average_VIs = []
 for x, filename in enumerate(filenames):
     print(f"processing {filename} number {x} of {len(filenames)}")
-    #vegetation_mask(ROOT_DIR, filename)
-    average_VI = vegetation_indices(ROOT_DIR, filename)
+    #vegetation_mask(INPUT_DIR, filename)
+    average_VI = vegetation_indices(INPUT_DIR, filename)
     average_VIs.append(average_VI)
 
 
