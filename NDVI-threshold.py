@@ -1,11 +1,11 @@
 #Runs vegetation threshold and vegetation indices
 
-from vegetation_mask import *
+from vegetation_mask import vegetation_mask
 import os
-from Vegetation_Indices import *
+from Vegetation_Indices import vegetation_indices
 from csv import DictWriter
 
-ROOT_DIR = "D:/indoor_plant_measurements_20180831/"
+ROOT_DIR = "/Volumes/New Volume/indoor_plant_measurements_20180831"
 filenames = os.listdir(ROOT_DIR)
 
 

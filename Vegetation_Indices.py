@@ -3,6 +3,7 @@ import spectral
 from spectral import envi
 import numpy as np
 from collections import OrderedDict
+from os import path
 
 
 def vegetation_indices(root_dir, filename):
@@ -18,8 +19,8 @@ def vegetation_indices(root_dir, filename):
         band_values = img_obj.read_bands(band_idxs)
         return np.average(band_values, axis=2)
 
-    dirname = root_dir + filename + "/reflectance/veg-extract/"
-    fpath = dirname + filename + "NDVI05.hdr"
+    indirname = path.join(root_dir, filename, "reflectance/veg-extract/")
+    fpath = path.join(indirname, filename + "NDVI05.hdr")
     img_obj = spectral.open_image(fpath)
 
     #define broad-bands
@@ -62,7 +63,7 @@ def vegetation_indices(root_dir, filename):
     VIs["WDR_NDVI_broad"] = (0.2*NIR_broad - RED_broad) / (0.2 * NIR_broad + RED_broad)
 
     veg_indices = np.stack(VIs.values(), axis=2)
-    envi.save_image(dirname + filename + "vegetation_indices.hdr", veg_indices, force=True, dtype=np.float32,
+    envi.save_image(path.join('/Volumes/New Volume/vis_indoor_plant_measurements_20180831', filename + "vegetation_indices.hdr"), veg_indices, force=True, dtype=np.float32,
                     metadata={'band names': VIs.keys()})
 
     #average value for each VI (not working...)
